@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 // Replace this with your actual Formspree endpoint from your account
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xblozejg";
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/;
 
 const PostExperimentSurvey = () => {
   const [participantInfo, setParticipantInfo] = useState({
