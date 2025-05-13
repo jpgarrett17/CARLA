@@ -1,0 +1,499 @@
+import React, { useState } from 'react';
+
+// Replace this with your actual Formspree endpoint from your account
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xblozejg";
+
+const PostExperimentSurvey = () => {
+  const [participantInfo, setParticipantInfo] = useState({
+    participantId: '',
+    date: '',
+  });
+  
+  const [trustAnswers, setTrustAnswers] = useState({
+    trust1: 0, trust2: 0, trust3: 0, trust4: 0, trust5: 0,
+    transparency1: 0, transparency2: 0, transparency3: 0, transparency4: 0,
+    acceptance1: 0, acceptance2: 0, acceptance3: 0
+  });
+  
+  const [workloadAnswers, setWorkloadAnswers] = useState({
+    mental: 0, physical: 0, temporal: 0, performance: 0, effort: 0, frustration: 0
+  });
+  
+  const [confidenceDisplayAnswers, setConfidenceDisplayAnswers] = useState({
+    conf1: 0, conf2: 0, conf3: 0, conf4: 0, conf5: 0, conf6: 0, conf7: 0, conf8: 0
+  });
+  
+  const [situationalAwarenessAnswers, setSituationalAwarenessAnswers] = useState({
+    awareness1: 0, awareness2: 0, awareness3: 0, awareness4: 0, awareness5: 0
+  });
+  
+  const [freeformAnswers, setFreeformAnswers] = useState({
+    helpful: '', difficult: '', takeover: '', improvements: '', additional: ''
+  });
+  
+  const [showConfidenceDisplay, setShowConfidenceDisplay] = useState(true);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  
+  const handleInfoChange = (e) => {
+    setParticipantInfo({
+      ...participantInfo,
+      [e.target.name]: e.target.value
+    });
+  };
+  
+  const handleTrustChange = (e) => {
+    setTrustAnswers({
+      ...trustAnswers,
+      [e.target.name]: parseInt(e.target.value)
+    });
+  };
+  
+  const handleWorkloadChange = (e) => {
+    setWorkloadAnswers({
+      ...workloadAnswers,
+      [e.target.name]: parseInt(e.target.value)
+    });
+  };
+  
+  const handleConfidenceDisplayChange = (e) => {
+    setConfidenceDisplayAnswers({
+      ...confidenceDisplayAnswers,
+      [e.target.name]: parseInt(e.target.value)
+    });
+  };
+  
+  const handleSituationalAwarenessChange = (e) => {
+    setSituationalAwarenessAnswers({
+      ...situationalAwarenessAnswers,
+      [e.target.name]: parseInt(e.target.value)
+    });
+  };
+  
+  const handleFreeformChange = (e) => {
+    setFreeformAnswers({
+      ...freeformAnswers,
+      [e.target.name]: e.target.value
+    });
+  };
+  
+  const handleSubmit = async () => {
+    // Create submission object with all survey data
+    const submissionData = {
+      participantInfo,
+      trustAnswers,
+      workloadAnswers,
+      confidenceDisplayAnswers: showConfidenceDisplay ? confidenceDisplayAnswers : "Not applicable",
+      situationalAwarenessAnswers,
+      freeformAnswers,
+      submittedAt: new Date().toISOString()
+    };
+    
+    // Set loading state
+    setIsSubmitting(true);
+    setSubmitError(null);
+    
+    try {
+      // Send to Formspree
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(submissionData)
+      });
+      
+      // Handle the response
+      if (response.ok) {
+        console.log("Form submitted successfully");
+        setIsSubmitted(true);
+      } else {
+        const errorData = await response.json();
+        console.error("Form submission error:", errorData);
+        setSubmitError("送信中にエラーが発生しました。もう一度お試しください。");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      setSubmitError("ネットワークエラーが発生しました。インターネット接続を確認してください。");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const renderRadioButtons = (name, value, onChange, max = 7) => {
+    return (
+      <div className="flex items-center gap-1 mt-1 flex-wrap">
+        {[...Array(max)].map((_, i) => (
+          <label key={i} className="flex items-center cursor-pointer mb-1 mr-1">
+            <input
+              type="radio"
+              name={name}
+              value={i + 1}
+              checked={value === i + 1}
+              onChange={onChange}
+              className="mr-1"
+            />
+            <span className="text-sm">{i + 1}</span>
+          </label>
+        ))}
+      </div>
+    );
+  };
+  
+  if (isSubmitted) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto bg-blue-50 rounded-lg">
+        <h1 className="text-2xl font-bold text-center mb-6">アンケートを提出いただき、ありがとうございました！</h1>
+        <p className="text-center">回答が保存されました。</p>
+        <div className="text-center text-sm text-gray-600 mt-2 mb-6">
+          <p>回答ID: {Math.random().toString(36).substring(2, 10).toUpperCase()}</p>
+          <p>提出日時: {new Date().toLocaleString('ja-JP')}</p>
+        </div>
+        <div className="flex justify-center mt-6">
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            新しいフォームを開く
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="p-4 max-w-4xl mx-auto bg-gray-50">
+      <h1 className="text-2xl font-bold text-center mb-6">実験後アンケート</h1>
+      
+      <div className="space-y-8">
+        {/* Participant Info */}
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">参加者情報</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-2">参加者ID/名前:</label>
+              <input 
+                type="text" 
+                name="participantId" 
+                value={participantInfo.participantId}
+                onChange={handleInfoChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-2">日付:</label>
+              <input 
+                type="date" 
+                name="date" 
+                value={participantInfo.date}
+                onChange={handleInfoChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+          </div>
+        </section>
+        
+        {/* System Trust and Acceptance */}
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">パート1: システム信頼性と受容性</h2>
+          <p className="mb-4 text-sm text-gray-600">あなたが体験した自動運転システムについて、以下の記述にどの程度同意するかを評価してください。(1 = 全く同意しない, 7 = 非常に同意する)</p>
+          
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">システムへの信頼</h3>
+            
+            <div className="mb-3">
+              <div className="flex justify-between mb-1">
+                <label className="block">1. システムは信頼性が高かった。</label>
+                <div className="text-xs text-gray-500 flex gap-4">
+                  <span>全く同意しない</span>
+                  <span>非常に同意する</span>
+                </div>
+              </div>
+              {renderRadioButtons('trust1', trustAnswers.trust1, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">2. システムの挙動は予測可能だった。</label>
+              {renderRadioButtons('trust2', trustAnswers.trust2, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">3. 安全な運転を維持するシステムを信頼していた。</label>
+              {renderRadioButtons('trust3', trustAnswers.trust3, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">4. システムが私の介入を必要とするタイミングを理解できた。</label>
+              {renderRadioButtons('trust4', trustAnswers.trust4, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">5. 必要な時に操作を引き継ぐ自信があった。</label>
+              {renderRadioButtons('trust5', trustAnswers.trust5, handleTrustChange)}
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">システムの透明性</h3>
+            
+            <div className="mb-3">
+              <label className="block">6. システムは現在の状態を明確に伝えていた。</label>
+              {renderRadioButtons('transparency1', trustAnswers.transparency1, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">7. システムが故障する可能性があるタイミングを予測できた。</label>
+              {renderRadioButtons('transparency2', trustAnswers.transparency2, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">8. システムは運転状況を把握するのに十分な情報を提供していた。</label>
+              {renderRadioButtons('transparency3', trustAnswers.transparency3, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">9. 自動運転から手動運転への移行は明確だった。</label>
+              {renderRadioButtons('transparency4', trustAnswers.transparency4, handleTrustChange)}
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="font-semibold mb-3">技術受容性</h3>
+            
+            <div className="mb-3">
+              <label className="block">10. この自動運転システムは役立つと感じた。</label>
+              {renderRadioButtons('acceptance1', trustAnswers.acceptance1, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">11. このシステムを使用することで運転体験が向上すると思う。</label>
+              {renderRadioButtons('acceptance2', trustAnswers.acceptance2, handleTrustChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">12. 自分の車にこのシステムが搭載されていれば使用したい。</label>
+              {renderRadioButtons('acceptance3', trustAnswers.acceptance3, handleTrustChange)}
+            </div>
+          </div>
+        </section>
+        
+        {/* Workload Assessment */}
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">パート2: 作業負荷評価 (NASA-TLX)</h2>
+          <p className="mb-4 text-sm text-gray-600">運転シミュレーション中に経験した作業負荷の以下の側面を評価してください。(1 = 非常に低い, 20 = 非常に高い)</p>
+          
+          <div className="mb-4">
+            <div className="flex justify-between mb-1">
+              <label className="block">精神的要求: タスクはどの程度精神的に要求の高いものでしたか？</label>
+              <div className="text-xs text-gray-500 flex gap-4">
+                <span>非常に低い</span>
+                <span>非常に高い</span>
+              </div>
+            </div>
+            {renderRadioButtons('mental', workloadAnswers.mental, handleWorkloadChange, 20)}
+          </div>
+          
+          <div className="mb-4">
+            <label className="block">身体的要求: タスクはどの程度身体的に要求の高いものでしたか？</label>
+            {renderRadioButtons('physical', workloadAnswers.physical, handleWorkloadChange, 20)}
+          </div>
+          
+          <div className="mb-4">
+            <label className="block">時間的圧迫感: タスクのペースはどの程度急いだり急かされたりするものでしたか？</label>
+            {renderRadioButtons('temporal', workloadAnswers.temporal, handleWorkloadChange, 20)}
+          </div>
+          
+          <div className="mb-4">
+            <label className="block">パフォーマンス: 求められたことをどの程度成功裏に達成できましたか？</label>
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>完璧</span>
+              <span>失敗</span>
+            </div>
+            {renderRadioButtons('performance', workloadAnswers.performance, handleWorkloadChange, 20)}
+          </div>
+          
+          <div className="mb-4">
+            <label className="block">努力: あなたのパフォーマンスレベルを達成するためにどの程度熱心に作業する必要がありましたか？</label>
+            {renderRadioButtons('effort', workloadAnswers.effort, handleWorkloadChange, 20)}
+          </div>
+          
+          <div className="mb-4">
+            <label className="block">フラストレーション: どの程度不安、落胆、イライラ、ストレス、そして悩まされましたか？</label>
+            {renderRadioButtons('frustration', workloadAnswers.frustration, handleWorkloadChange, 20)}
+          </div>
+        </section>
+        
+        {/* Confidence Display Evaluation */}
+        {showConfidenceDisplay && (
+          <section className="bg-white p-6 rounded-lg shadow">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-xl font-semibold">パート3: 信頼度表示の評価</h2>
+              <div>
+                <label className="flex items-center text-sm">
+                  <input 
+                    type="checkbox" 
+                    checked={showConfidenceDisplay} 
+                    onChange={() => setShowConfidenceDisplay(!showConfidenceDisplay)}
+                    className="mr-2"
+                  />
+                  信頼度表示あり条件
+                </label>
+              </div>
+            </div>
+            <p className="mb-4 text-sm text-gray-600">信頼度表示について、以下の記述にどの程度同意するかを評価してください。(1 = 全く同意しない, 7 = 非常に同意する)</p>
+            
+            <div className="mb-3">
+              <label className="block">13. 信頼度表示は理解しやすかった。</label>
+              {renderRadioButtons('conf1', confidenceDisplayAnswers.conf1, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">14. 信頼度表示によって、いつ操作を引き継ぐべきかを予測するのに役立った。</label>
+              {renderRadioButtons('conf2', confidenceDisplayAnswers.conf2, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">15. 信頼度表示は有用な情報を提供した。</label>
+              {renderRadioButtons('conf3', confidenceDisplayAnswers.conf3, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">16. 信頼度表示は運転の妨げになった。</label>
+              {renderRadioButtons('conf4', confidenceDisplayAnswers.conf4, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">17. 信頼度表示によって、システムを適切に信頼するのに役立った。</label>
+              {renderRadioButtons('conf5', confidenceDisplayAnswers.conf5, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">18. 信頼度表示の視覚デザインは効果的だった。</label>
+              {renderRadioButtons('conf6', confidenceDisplayAnswers.conf6, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">19. 信頼度表示の色分けは直感的だった。</label>
+              {renderRadioButtons('conf7', confidenceDisplayAnswers.conf7, handleConfidenceDisplayChange)}
+            </div>
+            
+            <div className="mb-3">
+              <label className="block">20. 信頼度表示によって、操作引き継ぎの準備をする十分な時間があった。</label>
+              {renderRadioButtons('conf8', confidenceDisplayAnswers.conf8, handleConfidenceDisplayChange)}
+            </div>
+          </section>
+        )}
+        
+        {/* Situational Awareness */}
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">パート4: 状況認識</h2>
+          <p className="mb-4 text-sm text-gray-600">運転シミュレーション中の状況認識に関する以下の記述について、どの程度同意するかを評価してください。(1 = 全く同意しない, 7 = 非常に同意する)</p>
+          
+          <div className="mb-3">
+            <label className="block">21. 車線内での車両の位置を認識していた。</label>
+            {renderRadioButtons('awareness1', situationalAwarenessAnswers.awareness1, handleSituationalAwarenessChange)}
+          </div>
+          
+          <div className="mb-3">
+            <label className="block">22. 車両が車線から外れ始めたときに気づいた。</label>
+            {renderRadioButtons('awareness2', situationalAwarenessAnswers.awareness2, handleSituationalAwarenessChange)}
+          </div>
+          
+          <div className="mb-3">
+            <label className="block">23. システムのパフォーマンスが低下したとき、対応する十分な時間があった。</label>
+            {renderRadioButtons('awareness3', situationalAwarenessAnswers.awareness3, handleSituationalAwarenessChange)}
+          </div>
+          
+          <div className="mb-3">
+            <label className="block">24. 数秒後に車両がどのように振る舞うかを予測できた。</label>
+            {renderRadioButtons('awareness4', situationalAwarenessAnswers.awareness4, handleSituationalAwarenessChange)}
+          </div>
+          
+          <div className="mb-3">
+            <label className="block">25. システムが操作引き継ぎを必要とした理由を理解していた。</label>
+            {renderRadioButtons('awareness5', situationalAwarenessAnswers.awareness5, handleSituationalAwarenessChange)}
+          </div>
+        </section>
+        
+        {/* Free Form Questions */}
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">パート5: 自由回答質問</h2>
+          
+          <div className="mb-4">
+            <label className="block mb-2">26. 自動運転システムのどの側面が最も役立ちましたか？</label>
+            <textarea 
+              name="helpful" 
+              value={freeformAnswers.helpful}
+              onChange={handleFreeformChange}
+              className="w-full p-2 border rounded h-24"
+            ></textarea>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block mb-2">27. 自動運転システムのどの側面が最も難しい、または混乱すると感じましたか？</label>
+            <textarea 
+              name="difficult" 
+              value={freeformAnswers.difficult}
+              onChange={handleFreeformChange}
+              className="w-full p-2 border rounded h-24"
+            ></textarea>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block mb-2">28. 自動運転システムからいつ操作を引き継ぐかをどのように判断しましたか？</label>
+            <textarea 
+              name="takeover" 
+              value={freeformAnswers.takeover}
+              onChange={handleFreeformChange}
+              className="w-full p-2 border rounded h-24"
+            ></textarea>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block mb-2">29. システムのインターフェースにどのような改善を提案しますか？</label>
+            <textarea 
+              name="improvements" 
+              value={freeformAnswers.improvements}
+              onChange={handleFreeformChange}
+              className="w-full p-2 border rounded h-24"
+            ></textarea>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block mb-2">30. 体験に関するその他のコメントがあれば記入してください。</label>
+            <textarea 
+              name="additional" 
+              value={freeformAnswers.additional}
+              onChange={handleFreeformChange}
+              className="w-full p-2 border rounded h-24"
+            ></textarea>
+          </div>
+        </section>
+        
+        {/* Submit Button */}
+        <div className="flex flex-col items-center mt-8">
+          {submitError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-md text-center">
+              {submitError}
+            </div>
+          )}
+          <button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className={`px-6 py-3 bg-blue-600 text-white font-medium rounded-lg transition duration-200 ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+            }`}
+          >
+            {isSubmitting ? '送信中...' : 'アンケートを提出する'}
+          </button>
+        </div>
+        
+        <p className="text-center text-gray-600 pt-4">本実験への参加、誠にありがとうございました！</p>
+      </div>
+    </div>
+  );
+};
+
+export default PostExperimentSurvey;
